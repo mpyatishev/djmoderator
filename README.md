@@ -1,0 +1,2 @@
+# djmoderator
+Django moderation app
