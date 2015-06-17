@@ -26,4 +26,4 @@ class ModeratorManagerFactory(object):
 class ModeratorManager(models.Manager):
     def get_queryset(self):
         return super(ModeratorManager, self).get_queryset()\
-            .filter(moderation_status=MODERATION_STATUS_APPROVED)
+            .filter(moderator_entry__moderation_status=MODERATION_STATUS_APPROVED)

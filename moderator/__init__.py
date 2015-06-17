@@ -1,11 +1,17 @@
 # -*- coding: utf-8 -*-
 
+from django.contrib.contenttypes.models import ContentType
+from django.contrib.contenttypes.generic import GenericRelation
 from django.db.models import signals
 from django.db.models.base import ModelBase
 
 
 from managers import ModeratorManagerFactory
-from models import ModeratorEntry
+from models import (
+    ModeratorEntry,
+
+    MODERATION_STATUS_PENDING,
+)
 
 
 class AlredyRegistered(Exception):
@@ -35,6 +41,7 @@ class Moderator(object):
                 self._registered[model] = moderator
                 self.init_signals(model)
                 self.update_managers(model, moderator)
+                self.add_moderator_entry(model)
             else:
                 raise AlredyRegistered('Model %s alredy registered with %s'
                                        % (model, self._registered[model]))
@@ -53,7 +60,19 @@ class Moderator(object):
         signals.post_save.connect(self.on_post_save, sender=model, weak=False)
 
     def on_post_save(self, sender, instance, created, **kwargs):
-        pass
+        if created:
+            me = ModeratorEntry.objects.create(
+                content_type=ContentType.objects.get_for_model(sender),
+                object_id=instance.pk
+            )
+            return
+
+        me = ModeratorEntry.objects.get(
+            content_type=ContentType.objects.get_for_model(sender),
+            object_id=instance.pk
+        )
+        me.moderation_status = MODERATION_STATUS_PENDING
+        me.save()
 
     def update_managers(self, model, moderator):
         for manager_name in moderator.managers:
@@ -61,6 +80,10 @@ class Moderator(object):
                 manager = getattr(model, manager_name).__class__
                 new_manager = ModeratorManagerFactory.get(bases=manager)
                 model.add_to_class(manager_name, new_manager())
+
+    def add_moderator_entry(self, model):
+        moderator_entry = GenericRelation(ModeratorEntry)
+        model.add_to_class('moderator_entry', moderator_entry)
 
 
 moderator = Moderator()

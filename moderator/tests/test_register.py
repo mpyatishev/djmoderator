@@ -14,6 +14,7 @@ from .. import (
     NotRegistered,
 )
 from ..managers import ModeratorManager
+
 from models import Model
 
 
@@ -24,7 +25,7 @@ class ModeratorTest(TestCase):
     def tearDown(self):
         if Model in moderator._registered:
             moderator.unregister(Model)
-            Model.objects = self.default_manager
+            Model.add_to_class('objects', self.default_manager)
 
     def test_register_adds_model_to_dict(self):
         moderator.register(Model)
@@ -66,3 +67,15 @@ class ModeratorTest(TestCase):
         moderator.update_managers(Model, ModeratorBase)
 
         self.assertEqual(Model.objects.__class__, object)
+
+    def test_add_moderator_etry(self):
+        moderator.add_moderator_entry(Model)
+
+        self.assertTrue(hasattr(Model, 'moderator_entry'))
+
+    def test_on_post_save_creates_moderatorentry(self):
+        moderator.register(Model)
+
+        model = Model.objects.create()
+        self.assertTrue(hasattr(model, 'moderator_entry'))
+        self.assertTrue(model.moderator_entry.all())
