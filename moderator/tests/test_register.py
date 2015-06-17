@@ -62,7 +62,7 @@ class ModeratorTest(TestCase):
 
     @mock.patch.object(ModeratorManagerFactory, 'get')
     def test_update_managers_adds_manager_to_model(self, m_get):
-        m_get.return_value = str
+        m_get.return_value = object
         moderator.update_managers(Model, ModeratorBase)
 
-        self.assertEqual(Model.objects.__class__, str)
+        self.assertEqual(Model.objects.__class__, object)
