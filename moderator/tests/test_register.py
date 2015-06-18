@@ -23,9 +23,12 @@ class ModeratorTest(TestCase):
         self.default_manager = Model.objects
 
     def tearDown(self):
-        if Model in moderator._registered:
+        try:
             moderator.unregister(Model)
-            Model.add_to_class('objects', self.default_manager)
+        except:
+            pass
+
+        Model.add_to_class('objects', self.default_manager)
 
     def test_register_adds_model_to_dict(self):
         moderator.register(Model)
@@ -46,6 +49,19 @@ class ModeratorTest(TestCase):
     def test_unregister_raises_notregistered(self):
         with self.assertRaises(NotRegistered):
             moderator.unregister(Model)
+
+    @mock.patch.object(moderator, 'disconnect_signals')
+    def test_unregister_calls_disconnect_signals(self, m_disconnect):
+        moderator._registered[Model] = None
+        moderator.unregister(Model)
+
+        m_disconnect.assert_called_with(Model)
+
+    @mock.patch('moderator.signals.post_save.disconnect')
+    def test_disconnects_signals(self, m_disconnect):
+        moderator.disconnect_signals(Model)
+
+        m_disconnect.assert_called_with(moderator.on_post_save, sender=Model)
 
     @mock.patch.object(moderator, 'update_managers')
     def test_register_calls_update_managers_for_model(self, m_update_managers):

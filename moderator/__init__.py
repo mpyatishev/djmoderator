@@ -53,25 +53,24 @@ class Moderator(object):
         for model in models_list:
             if model in self._registered:
                 del self._registered[model]
+                self.disconnect_signals(model)
             else:
                 raise NotRegistered('Model %s not registered' % model)
 
     def init_signals(self, model):
         signals.post_save.connect(self.on_post_save, sender=model, weak=False)
 
-    def on_post_save(self, sender, instance, created, **kwargs):
-        if created:
-            me = ModeratorEntry.objects.create(
-                content_type=ContentType.objects.get_for_model(sender),
-                object_id=instance.pk
-            )
-            return
+    def disconnect_signals(self, model):
+        signals.post_save.disconnect(self.on_post_save, sender=model)
 
-        me = ModeratorEntry.objects.get(
+    def on_post_save(self, sender, instance, **kwargs):
+        me, created = ModeratorEntry.objects.get_or_create(
             content_type=ContentType.objects.get_for_model(sender),
             object_id=instance.pk
         )
+
         me.moderation_status = MODERATION_STATUS_PENDING
+        me.diff()
         me.save()
 
     def update_managers(self, model, moderator):
