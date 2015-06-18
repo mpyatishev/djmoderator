@@ -26,5 +26,16 @@ class ModeratorEntry(models.Model):
     content_object = GenericForeignKey()
     moderation_status = models.IntegerField(choices=MODERATION_STATUS_CHOICES,
                                             default=MODERATION_STATUS_PENDING)
+    updated = models.DateTimeField(auto_now=True)
 
-    changes = JSONField()
+    original_values = JSONField()
+
+    def diff(self):
+        changes = self.changes.create()
+        changes.diff = {}
+
+
+class Changes(models.Model):
+    moderator_entry = models.ForeignKey(ModeratorEntry, related_name='changes')
+    created = models.DateTimeField(auto_now_add=True)
+    diff = JSONField()
