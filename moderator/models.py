@@ -41,11 +41,12 @@ class ModeratorEntry(models.Model):
     def diff(self, other=None):
         new_values = self._serialize(other)
 
-        changes = self.changes.create()
-        changes.diff = diff(self.original_values, new_values)
-        changes.save()
+        if new_values != self.original_values:
+            changes = self.changes.create()
+            changes.diff = diff(self.original_values, new_values)
+            changes.save()
 
-        self.original_values = new_values
+            self.original_values = new_values
 
     def save(self, *args, **kwargs):
         if not self.pk:

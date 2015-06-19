@@ -5,3 +5,8 @@ from django.db import models
 
 class Model(models.Model):
     name = models.CharField(max_length=255)
+
+
+class ModelFK(models.Model):
+    name = models.CharField(max_length=255)
+    rel = models.ForeignKey(Model)
