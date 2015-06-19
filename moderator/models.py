@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 
+from dictdiffer import diff
 
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.generic import GenericForeignKey
+from django.core import serializers
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
@@ -30,12 +32,31 @@ class ModeratorEntry(models.Model):
 
     original_values = JSONField()
 
-    def diff(self):
+    def _serialize(self, obj=None):
+        if obj is None:
+            model = self.content_type.model_class()
+            obj = model.objects.get(pk=self.object_id)
+        return serializers.serialize('python', [obj])[0]
+
+    def diff(self, other=None):
+        new_values = self._serialize(other)
+
         changes = self.changes.create()
-        changes.diff = {}
+        changes.diff = diff(self.original_values, new_values)
+        changes.save()
+
+        self.original_values = new_values
+
+    def save(self, *args, **kwargs):
+        if not self.pk:
+            self.original_values = self._serialize(self.content_object)
+        super(ModeratorEntry, self).save(*args, **kwargs)
 
 
 class Changes(models.Model):
     moderator_entry = models.ForeignKey(ModeratorEntry, related_name='changes')
     created = models.DateTimeField(auto_now_add=True)
     diff = JSONField()
+
+    class Meta:
+        ordering = ['-pk']
