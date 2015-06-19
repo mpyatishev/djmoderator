@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 
+import argparse
 import os
 import sys
 
-from django.conf import settings
 import django
+from django.conf import settings
 
 
 DEFAULT_SETTINGS = dict(
@@ -23,7 +24,7 @@ DEFAULT_SETTINGS = dict(
 )
 
 
-def runtests():
+def runtests(args):
     if not settings.configured:
         settings.configure(**DEFAULT_SETTINGS)
 
@@ -38,17 +39,24 @@ def runtests():
         from django.test.runner import DiscoverRunner
 
         runner_class = DiscoverRunner
-        test_args = ['moderator.tests']
+        test_args = [args.tests or 'moderator.tests']
     except ImportError:
         from django.test.simple import DjangoTestSuiteRunner
 
         runner_class = DjangoTestSuiteRunner
-        test_args = ['tests']
+        test_args = [args.tests or 'tests']
 
-    failures = runner_class(verbosity=2, interactive=True,
-                            failfast=False).run_tests(test_args)
+    failures = runner_class(verbosity=args.verbosity, interactive=True,
+                            failfast=args.failfast).run_tests(test_args)
     sys.exit(failures)
 
 
 if __name__ == '__main__':
-    runtests()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-v', '--verbosity', default=1, type=int)
+    parser.add_argument('-f', '--failfast', default=False, type=bool)
+    parser.add_argument('tests', nargs='?')
+
+    args = parser.parse_args()
+
+    runtests(args)
