@@ -13,7 +13,10 @@ from .. import (
     AlredyRegistered,
     NotRegistered,
 )
-from ..managers import ModeratorManager
+from ..models import (
+    MODERATION_STATUS_PENDING,
+)
+# from ..managers import ModeratorManager
 
 from models import Model
 
@@ -84,8 +87,13 @@ class ModeratorTest(TestCase):
 
         self.assertEqual(Model.objects.__class__, object)
 
-    def test_add_moderator_etry(self):
+    def test_add_moderator_etry_field(self):
         moderator.add_moderator_entry(Model)
+
+        self.assertTrue(hasattr(Model, 'moderator_entry'))
+
+    def test_register_adds_moderator_entry_field(self):
+        moderator.register(Model)
 
         self.assertTrue(hasattr(Model, 'moderator_entry'))
 
@@ -95,3 +103,25 @@ class ModeratorTest(TestCase):
         model = Model.objects.create()
         self.assertTrue(hasattr(model, 'moderator_entry'))
         self.assertTrue(model.moderator_entry.all())
+
+    def test_can_create_model_after_register(self):
+        moderator.register(Model)
+
+        model = Model()
+        model.save()
+        self.assertTrue(model)
+
+        model = Model.objects.create()
+        self.assertTrue(model)
+
+    def test_can_filter_model_after_register(self):
+        moderator.register(Model)
+
+        model = Model()
+        model.save()
+        self.assertTrue(model)
+
+        print(model.moderator_entry)
+
+        models = Model.objects.filter(moderator_entry=MODERATION_STATUS_PENDING)
+        self.assertIn(model, models)

@@ -69,9 +69,10 @@ class Moderator(object):
             object_id=instance.pk
         )
 
-        me.moderation_status = MODERATION_STATUS_PENDING
-        me.diff()
-        me.save()
+        if not created:
+            me.moderation_status = MODERATION_STATUS_PENDING
+            me.diff()
+            me.save()
 
     def update_managers(self, model, moderator):
         for manager_name in moderator.managers:
