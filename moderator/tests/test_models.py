@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from dictdiffer import diff
+# from dictdiffer import diff
 
 from django.contrib.contenttypes.models import ContentType
 from django.core import serializers
@@ -62,10 +62,10 @@ class TestModeratorEntry(TestCase):
     def test_diff_for_models_with_foreignkey(self):
         m = Model.objects.create(name='model first version')
         m_fk = ModelFK.objects.create(name='model with ForeignKey first version',
-                                      rel=m)
+                                      parent=m)
         me = ModeratorEntry.objects.create(
             content_type=ContentType.objects.get_for_model(ModelFK),
-            object_id = m_fk.pk
+            object_id=m_fk.pk
         )
 
         m_fk.name = 'model with ForeignKey second version'

@@ -9,4 +9,4 @@ class Model(models.Model):
 
 class ModelFK(models.Model):
     name = models.CharField(max_length=255)
-    parent = models.ForeignKey(Model)
+    parent = models.ForeignKey(Model, related_name="modelfk")

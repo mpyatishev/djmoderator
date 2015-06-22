@@ -39,9 +39,9 @@ class Moderator(object):
         for model in models_list:
             if model not in self._registered:
                 self._registered[model] = moderator
-                self.init_signals(model)
-                self.update_managers(model, moderator)
                 self.add_moderator_entry(model)
+                self.update_managers(model, moderator)
+                self.init_signals(model)
             else:
                 raise AlredyRegistered('Model %s alredy registered with %s'
                                        % (model, self._registered[model]))
@@ -54,6 +54,7 @@ class Moderator(object):
             if model in self._registered:
                 del self._registered[model]
                 self.disconnect_signals(model)
+                self.remove_moderator_entry(model)
             else:
                 raise NotRegistered('Model %s not registered' % model)
 
@@ -70,9 +71,10 @@ class Moderator(object):
         )
 
         if not created:
-            me.moderation_status = MODERATION_STATUS_PENDING
             me.diff()
-            me.save()
+
+        me.moderation_status = MODERATION_STATUS_PENDING
+        me.save()
 
     def update_managers(self, model, moderator):
         for manager_name in moderator.managers:
@@ -84,6 +86,12 @@ class Moderator(object):
     def add_moderator_entry(self, model):
         moderator_entry = GenericRelation(ModeratorEntry)
         model.add_to_class('moderator_entry', moderator_entry)
+
+        # need to flush fields names cache
+        model._meta.add_field(moderator_entry)
+
+    def remove_moderator_entry(self, model):
+        del model.moderator_entry
 
 
 moderator = Moderator()

@@ -13,10 +13,6 @@ from .. import (
     AlredyRegistered,
     NotRegistered,
 )
-from ..models import (
-    MODERATION_STATUS_PENDING,
-)
-# from ..managers import ModeratorManager
 
 from models import Model
 
@@ -54,11 +50,18 @@ class ModeratorTest(TestCase):
             moderator.unregister(Model)
 
     @mock.patch.object(moderator, 'disconnect_signals')
-    def test_unregister_calls_disconnect_signals(self, m_disconnect):
+    @mock.patch.object(moderator, 'remove_moderator_entry')
+    def test_unregister_calls_disconnect_signals(self, m_remove, m_disconnect):
         moderator._registered[Model] = None
         moderator.unregister(Model)
 
         m_disconnect.assert_called_with(Model)
+
+    def test_unregister_removes_moderator_entry(self):
+        moderator.register(Model)
+        moderator.unregister(Model)
+
+        self.assertFalse(hasattr(Model, 'moderator_entry'))
 
     @mock.patch('moderator.signals.post_save.disconnect')
     def test_disconnects_signals(self, m_disconnect):
@@ -121,7 +124,5 @@ class ModeratorTest(TestCase):
         model.save()
         self.assertTrue(model)
 
-        print(model.moderator_entry)
-
-        models = Model.objects.filter(moderator_entry=MODERATION_STATUS_PENDING)
+        models = Model.objects.unmoderated()
         self.assertIn(model, models)
