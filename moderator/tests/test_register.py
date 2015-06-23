@@ -14,7 +14,7 @@ from .. import (
     NotRegistered,
 )
 
-from models import Model, ModelFK
+from models import Model, ModelFK, ModelM2M
 
 
 class ModeratorTest(TestCase):
@@ -22,10 +22,11 @@ class ModeratorTest(TestCase):
         self.default_manager = Model.objects
 
     def tearDown(self):
-        try:
-            moderator.unregister(Model)
-        except:
-            pass
+        for m in (Model, ModelFK, ModelM2M):
+            try:
+                moderator.unregister(m)
+            except:
+                pass
 
         Model.add_to_class('objects', self.default_manager)
 
@@ -62,6 +63,11 @@ class ModeratorTest(TestCase):
         moderator.unregister(Model)
 
         self.assertFalse(hasattr(Model, 'moderator_entry'))
+
+        fields = []
+        for field in Model._meta.fields:
+            fields.append(field.name)
+        self.assertNotIn('moderator_entry', fields)
 
     @mock.patch('moderator.signals.post_save.disconnect')
     def test_disconnects_signals(self, m_disconnect):
@@ -126,6 +132,7 @@ class ModeratorTest(TestCase):
 
         models = Model.objects.unmoderated()
         self.assertIn(model, models)
+
     @mock.patch.object(moderator, 'init_signals')
     @mock.patch.object(moderator, 'update_managers')
     @mock.patch.object(moderator, 'add_moderator_entry')
@@ -139,7 +146,30 @@ class ModeratorTest(TestCase):
         m_update_managers.assert_called_with(Model, ModeratorBase)
         m_add_moderator_entry.assert_called_with(Model)
 
-    def test_get_related_models(self):
+    def test_get_related_models_by_fk(self):
         related = moderator.get_related_models(ModelFK)
 
         self.assertIn(Model, related)
+
+    def test_get_related_models_by_reverse_fk(self):
+        related = moderator.get_related_models(Model)
+
+        self.assertIn(ModelFK, related)
+
+    def test_get_related_models_m2m(self):
+        related = moderator.get_related_models(ModelM2M)
+
+        self.assertIn(Model, related)
+
+    def test_register_model_m2m(self):
+        moderator.register(ModelM2M, with_related=True)
+
+        self.assertIn(ModelM2M, moderator._registered)
+        self.assertIn(Model, moderator._registered)
+
+    def test_unregister_model_m2m(self):
+        moderator.register(ModelM2M, with_related=True)
+        moderator.unregister(ModelM2M)
+
+        self.assertNotIn(ModelM2M, moderator._registered)
+        self.assertNotIn(Model, moderator._registered)
