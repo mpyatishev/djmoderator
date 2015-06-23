@@ -10,6 +10,7 @@ from ..models import (
     ModeratorEntry,
     # Changes,
 )
+from ..managers import ModeratorManager
 
 from models import Model, ModelFK
 
@@ -29,6 +30,9 @@ class TestModeratorEntry(TestCase):
         self.assertEqual(me.original_values, values)
 
     def test_diff_creates_changes_record(self):
+        objects = Model.objects
+        Model.add_to_class('objects', ModeratorManager())
+
         m = Model.objects.create(name='model first version')
         me = ModeratorEntry.objects.create(
             content_type=ContentType.objects.get_for_model(Model),
@@ -41,6 +45,8 @@ class TestModeratorEntry(TestCase):
         me.diff()
 
         self.assertTrue(me.changes.all())
+
+        Model.add_to_class('objects', objects)
 
     def test_diff_fill_changes_diff(self):
         m = Model.objects.create(name='model first version')

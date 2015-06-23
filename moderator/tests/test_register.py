@@ -214,6 +214,7 @@ class ModeratorTest(TestCase):
 
         modelm2m = ModelM2M.objects.create(name='first')
         modelm2m.first.add(model)
+        modelm2m.save()
         me = model.moderator_entry.all()[0]
         self.assertEqual(me.moderation_status, MODERATION_STATUS_PENDING)
 
