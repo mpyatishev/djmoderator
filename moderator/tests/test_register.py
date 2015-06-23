@@ -14,7 +14,7 @@ from .. import (
     NotRegistered,
 )
 
-from models import Model
+from models import Model, ModelFK
 
 
 class ModeratorTest(TestCase):
@@ -126,3 +126,20 @@ class ModeratorTest(TestCase):
 
         models = Model.objects.unmoderated()
         self.assertIn(model, models)
+    @mock.patch.object(moderator, 'init_signals')
+    @mock.patch.object(moderator, 'update_managers')
+    @mock.patch.object(moderator, 'add_moderator_entry')
+    def test_register_related_models(self, m_add_moderator_entry,
+                                     m_update_managers, m_init_signals):
+        moderator.register(ModelFK, with_related=True)
+
+        self.assertIn(Model, moderator._registered)
+
+        m_init_signals.assert_called_with(Model)
+        m_update_managers.assert_called_with(Model, ModeratorBase)
+        m_add_moderator_entry.assert_called_with(Model)
+
+    def test_get_related_models(self):
+        related = moderator.get_related_models(ModelFK)
+
+        self.assertIn(Model, related)

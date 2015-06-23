@@ -30,9 +30,15 @@ class Moderator(object):
     def __init__(self):
         self._registered = {}
 
-    def register(self, models_list, moderator=None):
+    def register(self, models_list, moderator=None, with_related=False):
         if isinstance(models_list, ModelBase):
             models_list = [models_list]
+
+        if with_related:
+            related =[]
+            for model in models_list:
+             related += self.get_related_models(model)
+            models_list += related
 
         moderator = moderator or ModeratorBase
 
@@ -93,6 +99,15 @@ class Moderator(object):
     def remove_moderator_entry(self, model):
         del model.moderator_entry
 
+    def get_related_models(self, model):
+        related = []
+
+        concrete_model = model._meta.concrete_model
+        for field in concrete_model._meta.local_fields:
+            if field.rel:
+                related.append(field.rel.to)
+
+        return related
 
 moderator = Moderator()
 
