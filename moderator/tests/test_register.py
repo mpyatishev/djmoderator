@@ -204,7 +204,7 @@ class ModeratorTest(TestCase):
         self.assertEqual(me.moderation_status, MODERATION_STATUS_PENDING)
 
     def test_on_post_save_changes_moderation_status_on_related_m2m(self):
-        moderator.register(ModelFK, with_related=True)
+        moderator.register(ModelM2M, with_related=True)
 
         model = Model.objects.create(name='model')
         me = model.moderator_entry.all()[0]
@@ -212,7 +212,8 @@ class ModeratorTest(TestCase):
         me.save()
         self.assertNotEqual(me.moderation_status, MODERATION_STATUS_PENDING)
 
-        modelm2m = ModelM2M.objects.create(name='first', first=model)
+        modelm2m = ModelM2M.objects.create(name='first')
+        modelm2m.first.add(model)
         me = model.moderator_entry.all()[0]
         self.assertEqual(me.moderation_status, MODERATION_STATUS_PENDING)
 
