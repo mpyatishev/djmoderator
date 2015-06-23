@@ -35,7 +35,7 @@ class ModeratorEntry(models.Model):
     def _serialize(self, obj=None):
         if obj is None:
             model = self.content_type.model_class()
-            obj = model.objects.get(pk=self.object_id)
+            obj = model.objects.unmoderated().get(pk=self.object_id)
         return serializers.serialize('python', [obj])[0]
 
     def diff(self, other=None):
