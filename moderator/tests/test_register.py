@@ -13,6 +13,10 @@ from .. import (
     AlredyRegistered,
     NotRegistered,
 )
+from ..models import (
+    MODERATION_STATUS_APPROVED,
+    MODERATION_STATUS_PENDING,
+)
 
 from models import Model, ModelFK, ModelM2M
 
@@ -173,3 +177,28 @@ class ModeratorTest(TestCase):
 
         self.assertNotIn(ModelM2M, moderator._registered)
         self.assertNotIn(Model, moderator._registered)
+
+    def test_on_post_save_changes_moderation_status_on_related(self):
+        moderator.register(ModelFK, with_related=True)
+
+        model = Model.objects.create(name='model')
+        me = model.moderator_entry.all()[0]
+        me.moderation_status = MODERATION_STATUS_APPROVED
+        me.save()
+        self.assertNotEqual(me.moderation_status, MODERATION_STATUS_PENDING)
+
+        modelfk = ModelFK.objects.create(name='first', parent=model)
+        me = model.moderator_entry.all()[0]
+        self.assertEqual(me.moderation_status, MODERATION_STATUS_PENDING)
+
+        me.moderation_status = MODERATION_STATUS_APPROVED
+        me.save()
+
+        me_modelfk = modelfk.moderator_entry.all()[0]
+        me_modelfk.moderation_status = MODERATION_STATUS_APPROVED
+        me_modelfk.save()
+
+        modelfk.name = 'second'
+        modelfk.save()
+        me = model.moderator_entry.all()[0]
+        self.assertEqual(me.moderation_status, MODERATION_STATUS_PENDING)

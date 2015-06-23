@@ -89,9 +89,17 @@ class Moderator(object):
 
         if not created:
             me.diff()
+            me.moderation_status = MODERATION_STATUS_PENDING
+            me.save()
 
-        me.moderation_status = MODERATION_STATUS_PENDING
-        me.save()
+        if sender in self._relations:
+            for model in self._relations[sender]:
+                me, created = ModeratorEntry.objects.get_or_create(
+                    content_type=ContentType.objects.get_for_model(model),
+                )
+                if not created:
+                    me.moderation_status = MODERATION_STATUS_PENDING
+                    me.save()
 
     def update_managers(self, model, moderator):
         if model not in self._default_managers:
