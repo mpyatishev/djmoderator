@@ -40,7 +40,7 @@ class Moderator(object):
         if with_related:
             for model in models_list:
                 self._relations[model] = self.get_related_models(model)
-                related += self._relations[model]
+                related += [_ for _, attr in self._relations[model]]
             models_list += related
 
         moderator = moderator or ModeratorBase
@@ -62,7 +62,7 @@ class Moderator(object):
         related = []
         for model in models_list:
             if model in self._relations:
-                related += self._relations[model]
+                related += [_ for _, attr in self._relations[model]]
                 del self._relations[model]
         models_list += related
 
@@ -82,24 +82,28 @@ class Moderator(object):
         signals.post_save.disconnect(self.on_post_save, sender=model)
 
     def on_post_save(self, sender, instance, **kwargs):
+        self.moderate(sender, instance)
+
+        if sender in self._relations:
+            for model, field in self._relations[sender]:
+                related_instance = getattr(instance, field)
+
+                if 'ManyRelatedManager' == related_instance.__class__.__name__:
+                    for inst in related_instance.all():
+                        self.moderate(model, inst, diff=False)
+                else:
+                    self.moderate(model, related_instance, diff=False)
+
+    def moderate(self, model, instance, diff=True):
         me, created = ModeratorEntry.objects.get_or_create(
-            content_type=ContentType.objects.get_for_model(sender),
+            content_type=ContentType.objects.get_for_model(model),
             object_id=instance.pk
         )
 
         if not created:
-            me.diff()
+            if diff: me.diff()
             me.moderation_status = MODERATION_STATUS_PENDING
             me.save()
-
-        if sender in self._relations:
-            for model in self._relations[sender]:
-                me, created = ModeratorEntry.objects.get_or_create(
-                    content_type=ContentType.objects.get_for_model(model),
-                )
-                if not created:
-                    me.moderation_status = MODERATION_STATUS_PENDING
-                    me.save()
 
     def update_managers(self, model, moderator):
         if model not in self._default_managers:
@@ -148,12 +152,12 @@ class Moderator(object):
         # foreign key
         for field in concrete_model._meta.local_fields:
             if field.rel and field.rel.to not in related:
-                related.append(field.rel.to)
+                related.append((field.rel.to, field.name))
 
         # m2m
         for field in concrete_model._meta.local_many_to_many:
             if field.rel and field.rel.to not in related:
-                related.append(field.rel.to)
+                related.append((field.rel.to, field.name))
 
         # reverse foreign key
         for attr in dir(model):
@@ -161,7 +165,7 @@ class Moderator(object):
             if hasattr(model_attr, 'related'):
                 foreign = model_attr.related.model
                 if foreign not in related:
-                    related.append(foreign)
+                    related.append((foreign, attr))
 
         return related
 

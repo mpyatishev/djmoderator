@@ -153,17 +153,17 @@ class ModeratorTest(TestCase):
     def test_get_related_models_by_fk(self):
         related = moderator.get_related_models(ModelFK)
 
-        self.assertIn(Model, related)
+        self.assertIn((Model, 'parent'), related)
 
     def test_get_related_models_by_reverse_fk(self):
         related = moderator.get_related_models(Model)
 
-        self.assertIn(ModelFK, related)
+        self.assertIn((ModelFK, 'modelfk'), related)
 
     def test_get_related_models_m2m(self):
         related = moderator.get_related_models(ModelM2M)
 
-        self.assertIn(Model, related)
+        self.assertIn((Model, 'first'), related)
 
     def test_register_model_m2m(self):
         moderator.register(ModelM2M, with_related=True)
@@ -229,3 +229,22 @@ class ModeratorTest(TestCase):
         modelm2m.save()
         me = model.moderator_entry.all()[0]
         self.assertEqual(me.moderation_status, MODERATION_STATUS_PENDING)
+
+    def test_on_post_save_doesnt_changes_other_moderator_entry(self):
+        moderator.register(ModelFK, with_related=True)
+
+        model = Model.objects.create(name='model')
+        me = model.moderator_entry.all()[0]
+        me.moderation_status = MODERATION_STATUS_APPROVED
+        me.save()
+        self.assertNotEqual(me.moderation_status, MODERATION_STATUS_PENDING)
+
+        other = Model.objects.create(name='other')
+        me = other.moderator_entry.all()[0]
+        me.moderation_status = MODERATION_STATUS_APPROVED
+        me.save()
+        self.assertNotEqual(me.moderation_status, MODERATION_STATUS_PENDING)
+
+        modelfk = ModelFK.objects.create(name='first', parent=model)
+        me = other.moderator_entry.all()[0]
+        self.assertNotEqual(me.moderation_status, MODERATION_STATUS_PENDING)
