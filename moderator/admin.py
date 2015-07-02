@@ -19,11 +19,9 @@ from models import (
     MODERATION_STATUS_APPROVED,
     MODERATION_STATUS_PENDING,
     MODERATION_STATUS_REJECTED,
+
+    ModeratorEntry,
 )
-
-
-class ModeratedObject:
-    pass
 
 
 class ModeratorSite(AdminSite):
@@ -95,9 +93,9 @@ class ModeratorSite(AdminSite):
         return TemplateResponse(request, self.index_template, context)
 
     def get_moderated_queryset(self, status, model):
-        return ModeratedObject.objects.filter(moderation_status=status,
-                                              content_type=ContentType
-                                              .objects.get_for_model(model))
+        return ModeratorEntry.objects.filter(moderation_status=status,
+                                             content_type=ContentType
+                                             .objects.get_for_model(model))
 
     def moderate_list(self, request, *args, **kwargs):
         status = kwargs.get('status', None)
@@ -107,7 +105,8 @@ class ModeratorSite(AdminSite):
             return Http404
 
         context = {
-            'models': self.get_moderated_queryset(status, model)
+            'models': self.get_moderated_queryset(status, model),
+            'url_name': 'moderator:moderate-%s' % model._meta.model_name
         }
 
         return TemplateResponse(request, self.list_template, context)
@@ -131,7 +130,7 @@ class ModerateForm(forms.Form):
 
 
 class ModelModerator(ModelAdmin):
-    moderate_template = 'moderate.html'
+    moderate_template = 'moderator/moderate.html'
     moderate_form = ModerateForm
 
     def get_urls(self):

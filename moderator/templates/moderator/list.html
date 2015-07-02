@@ -1,0 +1,14 @@
+{% extends "moderator/index.html" %}
+
+{% block content %}
+    {% load moderator_filters %}
+    <ul>
+    {% for model in models %}
+        {% with instance=model.content_object %}
+        <li>
+			<a href="{% url url_name pk=instance.pk %}">{{ instance }}</a>
+        </li>
+        {% endwith %}
+    {% endfor %}
+    </ul>
+{% endblock %}
