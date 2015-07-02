@@ -4,6 +4,10 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.generic import GenericRelation
 from django.db.models import signals
 from django.db.models.base import ModelBase
+from django.utils.module_loading import autodiscover_modules
+
+
+default_app_config = 'moderator.app.ModeratorConfig'
 
 
 from managers import ModeratorManagerFactory
@@ -12,6 +16,10 @@ from models import (
 
     MODERATION_STATUS_PENDING,
 )
+
+
+def autodiscover():
+    autodiscover_modules('moder')
 
 
 class AlredyRegistered(Exception):
@@ -24,6 +32,9 @@ class NotRegistered(Exception):
 
 class ModeratorBase(object):
     managers = ['objects']
+
+    def __init__(self, with_related=False):
+        self._with_related = with_related
 
 
 class Moderator(object):
@@ -47,7 +58,7 @@ class Moderator(object):
 
         for model in models_list:
             if model not in self._registered:
-                self._registered[model] = moderator
+                self._registered[model] = moderator(with_related=with_related)
                 self.add_moderator_entry(model)
                 self.update_managers(model, moderator)
                 self.init_signals(model)
@@ -101,7 +112,8 @@ class Moderator(object):
         )
 
         if not created:
-            if diff: me.diff()
+            if diff:
+                me.diff()
             me.moderation_status = MODERATION_STATUS_PENDING
             me.save()
 
@@ -169,6 +181,5 @@ class Moderator(object):
 
         return related
 
-moderator = Moderator()
 
-default_app_config = 'moderator.app.ModeratorConfig'
+moderator = Moderator()
