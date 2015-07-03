@@ -159,10 +159,10 @@ class ModelModerator(ModelAdmin):
                 data = form.cleaned_data
                 obj = self.get_object(request, kwargs.get('pk'))
                 if data.get('approved', False):
-                    obj.moderated_object.approve(moderated_by=request.user,
+                    obj.moderator_entry.approve(moderated_by=request.user,
                                                  reason=data.get('reason', ''))
                 else:
-                    obj.moderated_object.reject(moderated_by=request.user,
+                    obj.moderator_entry.reject(moderated_by=request.user,
                                                 reason=data.get('reason', ''))
                 return self.render_to_json_response('OK')
             else:

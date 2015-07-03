@@ -2,6 +2,7 @@
 
 from dictdiffer import diff
 
+from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.generic import GenericForeignKey
 from django.core import serializers
@@ -29,6 +30,8 @@ class ModeratorEntry(models.Model):
     moderation_status = models.IntegerField(choices=MODERATION_STATUS_CHOICES,
                                             default=MODERATION_STATUS_PENDING)
     updated = models.DateTimeField(auto_now=True)
+    reason = models.TextField()
+    moderator = models.ForeignKey(settings.AUTH_USER_MODEL)
 
     original_values = JSONField()
 
@@ -52,6 +55,19 @@ class ModeratorEntry(models.Model):
         if not self.pk:
             self.original_values = self._serialize(self.content_object)
         super(ModeratorEntry, self).save(*args, **kwargs)
+
+    def moderate(self, moderated_by, reason, status):
+        self.moderator = moderated_by
+        self.reason = reason
+        self.moderation_status = status
+
+        self.save()
+
+    def approve(self, moderated_by, reason):
+        self.moderate(moderated_by, reason, MODERATION_STATUS_APPROVED)
+
+    def reject(self, moderated_by, reason):
+        self.moderate(moderated_by, reason, MODERATION_STATUS_REJECTED)
 
 
 class Changes(models.Model):
