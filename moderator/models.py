@@ -31,7 +31,7 @@ class ModeratorEntry(models.Model):
                                             default=MODERATION_STATUS_PENDING)
     updated = models.DateTimeField(auto_now=True)
     reason = models.TextField()
-    moderator = models.ForeignKey(settings.AUTH_USER_MODEL)
+    moderator = models.ForeignKey(settings.AUTH_USER_MODEL, null=True)
 
     original_values = JSONField()
 
