@@ -8,6 +8,15 @@ import django
 from django.conf import settings
 
 
+# https://gist.github.com/NotSqrt/5f3c76cd15e40ef62d09
+class DisableMigrations(object):
+    def __contains__(self, item):
+        return True
+
+    def __getitem__(self, item):
+        return "notmigrations"
+
+
 DEFAULT_SETTINGS = dict(
     INSTALLED_APPS=(
         'django.contrib.contenttypes',
@@ -21,6 +30,7 @@ DEFAULT_SETTINGS = dict(
         }
     },
     SILENCED_SYSTEM_CHECKS=["1_7.W001"],
+    MIGRATION_MODULES=DisableMigrations(),
 )
 
 
