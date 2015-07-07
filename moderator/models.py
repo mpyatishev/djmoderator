@@ -69,6 +69,12 @@ class ModeratorEntry(models.Model):
     def reject(self, moderated_by, reason):
         self.moderate(moderated_by, reason, MODERATION_STATUS_REJECTED)
 
+    def get_changes(self):
+        changes = self.changes.last()
+        if changes:
+            return changes.diff
+        return None
+
 
 class Changes(models.Model):
     moderator_entry = models.ForeignKey(ModeratorEntry, related_name='changes')

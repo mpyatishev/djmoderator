@@ -8,6 +8,7 @@
 {% endblock %}
 
 {% block moderate %}
+	{{ changes }}
 	<form id="moderation-form" method="POST">
 		{% csrf_token %}
 		<textarea name="reason"></textarea> <br />
@@ -38,7 +39,7 @@
 					data: fd,
 					processData: false,
 					contentType: false,
-						{% comment %}
+					{% comment %}
 					beforeSend: function(xhr, settings) {
 						if (!csrfSafeMethod(settings.type)) {
 							xhr.setRequestHeader("X-CSRFToken", $.cookie('csrftoken'));

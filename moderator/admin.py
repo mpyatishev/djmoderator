@@ -144,8 +144,13 @@ class ModelModerator(ModelAdmin):
 
         return urlpatterns
 
-    def get_context_data(self, *args, **kwargs):
-        return {}
+    def get_context_data(self, request, *args, **kwargs):
+        obj = self.get_object(request, kwargs.get('pk'))
+        moderator_entry = obj.moderator_entry.first()
+
+        return {
+            'changes': moderator_entry.get_changes()
+        }
 
     def render_to_json_response(self, context, **kwargs):
         context = json.dumps(context)
@@ -169,8 +174,6 @@ class ModelModerator(ModelAdmin):
             else:
                 return self.render_to_json_response(form.errors, status=400)
         else:
-            context = self.get_context_data()
-
-        obj = self.get_object(request, kwargs.get('pk'))
+            context = self.get_context_data(request, **kwargs)
 
         return TemplateResponse(request, self.moderate_template, context)
