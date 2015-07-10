@@ -1,0 +1,17 @@
+{% if change %}
+	{% for field, values in change %}
+	<div>
+		<div>{{ field.verbose_name }}</div>
+		<div>{{ values.0 }}</div>
+		<div>{{ values.1 }}</div>
+	</div>
+	{% endfor %}
+{% endif%}
+{% if add %}
+	{% for field, value in add %}
+	<div>
+		<div>{{ field.verbose_name }}</div>
+		<div>{{ value }}</div>
+	</div>
+	{% endfor %}
+{% endif %}

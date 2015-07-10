@@ -13,15 +13,31 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='Poll',
+            name='Post',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('title', models.CharField(max_length=255)),
                 ('text', models.TextField()),
-                ('author', models.ForeignKey(to=settings.AUTH_USER_MODEL)),
+            ],
+            options={
+                'ordering': ['pk'],
+            },
+            bases=(models.Model,),
+        ),
+        migrations.CreateModel(
+            name='PostWithImage',
+            fields=[
+                ('post_ptr', models.OneToOneField(parent_link=True, auto_created=True, primary_key=True, serialize=False, to='posts.Post')),
+                ('image', models.ImageField(upload_to=b'')),
             ],
             options={
             },
-            bases=(models.Model,),
+            bases=('posts.post',),
+        ),
+        migrations.AddField(
+            model_name='post',
+            name='author',
+            field=models.ForeignKey(to=settings.AUTH_USER_MODEL),
+            preserve_default=True,
         ),
     ]

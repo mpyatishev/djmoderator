@@ -87,6 +87,7 @@ class ModeratorSite(AdminSite):
                     'approved': approved,
                     'rejected': rejected,
                     'pending': pending,
+                    'verbose_name': model._meta.verbose_name_plural,
                 }
             })
 
@@ -146,10 +147,9 @@ class ModelModerator(ModelAdmin):
 
     def get_context_data(self, request, *args, **kwargs):
         obj = self.get_object(request, kwargs.get('pk'))
-        moderator_entry = obj.moderator_entry.first()
 
         return {
-            'changes': moderator_entry.get_changes()
+            'object': obj
         }
 
     def render_to_json_response(self, context, **kwargs):

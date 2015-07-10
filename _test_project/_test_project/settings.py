@@ -133,7 +133,7 @@ INSTALLED_APPS = (
 
     'moderator',
 
-    'polls',
+    'posts',
 )
 
 # A sample logging configuration. The only tangible logging

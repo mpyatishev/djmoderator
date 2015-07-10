@@ -70,10 +70,7 @@ class ModeratorEntry(models.Model):
         self.moderate(moderated_by, reason, MODERATION_STATUS_REJECTED)
 
     def get_changes(self):
-        changes = self.changes.last()
-        if changes:
-            return changes.diff
-        return None
+        return self.changes.first()
 
 
 class Changes(models.Model):

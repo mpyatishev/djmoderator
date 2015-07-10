@@ -32,12 +32,13 @@
 
                 <ul>
                 {% for model in apps|get_item:app %}
+					{{ apps|get_item:app|get_item:model|get_item:'verbose_name' }}
                     <li>
-                        {{ model }} <br />
                         <a href="{% url 'moderator:pending-list' %}">{{ apps|get_item:app|get_item:model|get_item:'pending' }} {% trans "Pending" %}</a>
                         <a href="{% url 'moderator:approved-list' %}">{{ apps|get_item:app|get_item:model|get_item:'approved' }} {% trans "Approved" %}</a>
                         <a href="{% url 'moderator:rejected-list' %}">{{ apps|get_item:app|get_item:model|get_item:'rejected' }} {% trans "Rejected" %}</a>
                     </li>
+					<br />
                 {% endfor %}
                 </ul>
 
