@@ -50,7 +50,7 @@
 					{% endcomment %}
 					success: function (data, textStatus, jqXHR) {
 						console.log(data);
-						location.href = '{% url "moderator:pending-list" %}';
+						location.href = '{% url "moderator:pending-list-"|add:model_name %}';
 					},
 					error: function(jqXHR, textStatus, errorThrown) {
 						console.log(textStatus);

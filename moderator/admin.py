@@ -45,17 +45,18 @@ class ModeratorSite(AdminSite):
         # Add in each model's views, and create a list of valid URLS for the
         # app_index
         valid_app_labels = []
+        urlpatterns = []
         for model, model_admin in six.iteritems(self._registry):
-            urlpatterns = patterns(
+            urlpatterns += patterns(
                 '',
                 url(r'^%s/%s/pending/' % (model._meta.app_label, model._meta.model_name),
-                    self.moderate_list, name='pending-list',
+                    self.moderate_list, name='pending-list-' + model._meta.model_name,
                     kwargs={'status': MODERATION_STATUS_PENDING, 'model': model}),
                 url(r'^%s/%s/approved/' % (model._meta.app_label, model._meta.model_name),
-                    self.moderate_list, name='approved-list',
+                    self.moderate_list, name='approved-list-' + model._meta.model_name,
                     kwargs={'status': MODERATION_STATUS_APPROVED, 'model': model}),
                 url(r'^%s/%s/rejected/' % (model._meta.app_label, model._meta.model_name),
-                    self.moderate_list, name='rejected-list',
+                    self.moderate_list, name='rejected-list-' + model._meta.model_name,
                     kwargs={'status': MODERATION_STATUS_REJECTED, 'model': model}),
                 url(r'^%s/%s/' % (model._meta.app_label, model._meta.model_name),
                     include(model_admin.urls))
@@ -149,7 +150,8 @@ class ModelModerator(ModelAdmin):
         obj = self.get_object(request, kwargs.get('pk'))
 
         return {
-            'object': obj
+            'object': obj,
+            'model_name': obj._meta.model_name,
         }
 
     def render_to_json_response(self, context, **kwargs):
